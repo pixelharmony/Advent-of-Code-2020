@@ -6,16 +6,30 @@ import (
 	"os"
 )
 
+var globalPosition = 0
+
 func main() {
 
-	rightSteps := 3
-	globalPosition := 0
+	hits := 1
+
 	slopeMap := parseSlopeMap()
+
+	hits = hits * calcSlopeHits(slopeMap, 1, 1)
+	hits = hits * calcSlopeHits(slopeMap, 3, 1)
+	hits = hits * calcSlopeHits(slopeMap, 5, 1)
+	hits = hits * calcSlopeHits(slopeMap, 7, 1)
+	hits = hits * calcSlopeHits(slopeMap, 1, 2)
+
+	fmt.Printf("Hit %v trees", hits)
+}
+
+func calcSlopeHits(slopeMap []string, rightSteps int, downSteps int) int {
 	slopeMapWidth := len(slopeMap[0])
 
 	hits := 0
 
-	for _, slopeRow := range slopeMap[1:] {
+	for i := downSteps; i < len(slopeMap); i += downSteps {
+		slopeRow := slopeMap[i]
 		globalPosition = globalPosition + rightSteps
 		localPosition := globalPosition % slopeMapWidth
 		plotValue := []rune(slopeRow)[localPosition]
@@ -25,7 +39,8 @@ func main() {
 		}
 	}
 
-	fmt.Printf("%v Hits", hits)
+	globalPosition = 0
+	return hits
 }
 
 func parseSlopeMap() []string {
