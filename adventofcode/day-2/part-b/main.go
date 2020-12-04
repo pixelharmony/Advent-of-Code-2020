@@ -6,13 +6,12 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 type passwordStruct struct {
 	PolicyMin int
 	PolicyMax int
-	Character string
+	Character rune
 	Password  string
 }
 
@@ -30,9 +29,12 @@ func main() {
 
 		var value = parsePassword(scanner.Text())
 
-		var letterCount = strings.Count(value.Password, value.Character)
+		var characters = []rune(value.Password)
 
-		if letterCount >= value.PolicyMin && letterCount <= value.PolicyMax {
+		var validPolicyMin = characters[value.PolicyMin-1] == value.Character
+		var validPolicyMax = characters[value.PolicyMax-1] == value.Character
+
+		if validPolicyMin != validPolicyMax {
 			validPasswordCount = validPasswordCount + 1
 		}
 	}
@@ -45,7 +47,7 @@ func parsePassword(value string) passwordStruct {
 
 	var policyMin, _ = strconv.Atoi(match[1])
 	var policyMax, _ = strconv.Atoi(match[2])
-	var character = match[3]
+	var character = rune(match[3][0])
 	var password = match[4]
 
 	return passwordStruct{policyMin, policyMax, character, password}
