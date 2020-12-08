@@ -4,34 +4,41 @@ import (
 	"fmt"
 	"io/ioutil"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
 type node struct {
 	Parents  []string
-	Children []string
+	Children []bag
+}
+
+type bag struct {
+	Count  int
+	Colour string
 }
 
 func main() {
 	graph := buildGraph()
-	var nodesToProcess []*node
-
 	shinyGoldNode := getNode(graph, "shiny gold")
-	nodesToProcess = append(nodesToProcess, shinyGoldNode)
-	foundNodes := make(map[string]struct{})
+	count := countBags(graph, shinyGoldNode)
 
-	for len(nodesToProcess) > 0 {
-		node := pop(&nodesToProcess)
+	fmt.Println(count)
+}
 
-		for _, parent := range node.Parents {
-			parentNode := getNode(graph, parent)
-			nodesToProcess = append(nodesToProcess, parentNode)
+func countBags(graph map[string]*node, node *node) int {
+	bagCount := 0
 
-			foundNodes[parent] = struct{}{}
-		}
+	for _, child := range node.Children {
+		bagCount = bagCount + child.Count
+
+		childNode := getNode(graph, child.Colour)
+		innerBags := countBags(graph, childNode)
+
+		bagCount = bagCount + (innerBags * child.Count)
 	}
 
-	fmt.Printf("Total: %v", len(foundNodes))
+	return bagCount
 }
 
 func pop(nodesToProcess *[]*node) *node {
@@ -53,7 +60,7 @@ func buildGraph() map[string]*node {
 		parentNode.Children = append(parentNode.Children, children...)
 
 		for _, child := range children {
-			childNode := getNode(graph, child)
+			childNode := getNode(graph, child.Colour)
 			childNode.Parents = append(childNode.Parents, parent)
 		}
 	}
@@ -69,7 +76,7 @@ func getNode(graph map[string]*node, key string) *node {
 	return graph[key]
 }
 
-func parseRule(text string) (parent string, children []string) {
+func parseRule(text string) (parent string, children []bag) {
 	rp := regexp.MustCompile(`((\d)*(?:\s)*(\w+ \w+) bag)`)
 	match := rp.FindAllStringSubmatch(text, -1)
 
@@ -77,7 +84,10 @@ func parseRule(text string) (parent string, children []string) {
 
 	for i := 1; i < len(match); i++ {
 		colour := match[i][3]
-		children = append(children, colour)
+		if colour != "no other" {
+			count, _ := strconv.Atoi(match[i][2])
+			children = append(children, bag{count, colour})
+		}
 	}
 
 	return parent, children
